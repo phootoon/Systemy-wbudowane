@@ -1,61 +1,30 @@
-import RPi.GPIO as GPIO
-import os
-import time
-from gpiozero import Servo
+from gpiozero import Servo, Button
 from time import sleep
 
-# GPIO setup
-buttonPin = 27
-servoPin = 17
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(buttonPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+servo_pin = 27   # GPIO pin connected to the servo
+button_pin = 17  # GPIO pin connected to the button
 
-# Servo setup
-servo = Servo(servoPin)
+# Set up the servo and button
+servo = Servo(servo_pin)
+button = Button(button_pin)
 
-# Constants for the button debounce and double click detection
-CLICK_DELAY = 0.5  # 0.5 seconds to detect double click
-ROTATION_ANGLE = 1/8  # 1/8 rotation
-
-# Initial state
-lastButtonState = False
-lastDebounceTime = 0
-clickCount = 0
-
+# Function to rotate the servo 1/8 of a rotation
 def rotate_servo():
-    initial_position = servo.value
-    target_position = initial_position + ROTATION_ANGLE
-    if target_position > 1:  # Ensure we don't exceed the servo's range
-        target_position = 1
-    servo.value = target_position
-    sleep(0.5)
-    servo.value = initial_position  # Reset to initial position
+    angle = 0  # Assuming 0 is the initial position
+    increment = 1/8  # 1/8 rotation
+    new_angle = angle + increment
+    if new_angle > 1:  # Servo angles in gpiozero range from -1 to 1
+        new_angle = -1
+    servo.value = new_angle
+    sleep(0.5)  # Give time for servo to rotate
+    angle = new_angle
 
+# Setup an event to detect button press
+button.when_pressed = rotate_servo
+
+# Keep the program running
 try:
     while True:
-        currentButtonState = GPIO.input(buttonPin)
-        
-        # Check for button state change
-        if currentButtonState != lastButtonState:
-            lastDebounceTime = time.time()
-
-        if (time.time() - lastDebounceTime) > CLICK_DELAY:
-            # Button clicked once
-            if clickCount == 1:
-                rotate_servo()
-            
-            # Button double clicked
-            elif clickCount == 2:
-                os.system("sudo shutdown -h now")
-            
-            clickCount = 0
-
-        # Update the number of clicks
-        if currentButtonState == False and lastButtonState == True:
-            clickCount += 1
-
-        lastButtonState = currentButtonState
-        time.sleep(0.01)
-
-finally:
-    GPIO.cleanup()
+        sleep(0.1)
+except KeyboardInterrupt:
+    pass
