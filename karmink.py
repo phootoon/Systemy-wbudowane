@@ -1,8 +1,8 @@
 from gpiozero import Servo, Button
 from time import sleep
 
-servo_pin = 17   # GPIO pin connected to the servo
-button_pin = 27  # GPIO pin connected to the button
+servo_pin = 27   # GPIO pin connected to the servo
+button_pin = 17  # GPIO pin connected to the button
 
 # Set up the servo and button
 servo = Servo(servo_pin)
